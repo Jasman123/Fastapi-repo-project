@@ -3,8 +3,7 @@ services:
   image: postgres:lastest
   environment:
     POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: password
+    POSTGRES_PASSWORD: 123456
     POSTGRES_DB: mydatabase
   ports:
     - "5432:5432"
-    

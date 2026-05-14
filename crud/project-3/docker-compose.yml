@@ -1,0 +1,14 @@
+service: 
+  db:
+    image: postgres:lastest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data: ./database:/var/lib/postgresql/data
+
+volumes:
+  db_data
