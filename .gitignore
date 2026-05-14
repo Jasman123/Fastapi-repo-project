@@ -12,4 +12,6 @@ venv/
 #database
 database/
 
+chroma_db/
+
 

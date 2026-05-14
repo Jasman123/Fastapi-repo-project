@@ -5,17 +5,17 @@ from fastapi import UploadFile, HTTPException
 
 
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 
 from .config import settings
 
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=settings.OPEN_API_KEY)
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=settings.OPENAI_API_KEY)
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=settings.CHUNK_SIZE,
     chunk_overlap=settings.CHUNK_OVERLAP,
-    add_star_index=True
+    add_start_index=True
 )
 
 

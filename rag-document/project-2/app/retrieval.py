@@ -1,16 +1,16 @@
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnalble import RunnablePassThrough
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 
 
 from .config import settings
 from .ingestion import get_vectorstore
 
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=settings.OPEN_API_KEY)
-llm = ChatOpenAI(model="gpt-4o-mini", openai_api_key=settings.OPEN_API_KEY, temperature=0.1)
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=settings.OPENAI_API_KEY)
+llm = ChatOpenAI(model="gpt-4o-mini", openai_api_key=settings.OPENAI_API_KEY, temperature=0.1)
 
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system", """You are a helpful assistant that answers questions \
