@@ -143,6 +143,137 @@ or expand abbreviations. Return ONLY the rewritten query."""),
         "doc_grade":     "",           # reset grade so retrieve runs fresh
     }
 
+def generate(state:GraphState) -> GraphState:
+    print(f"[NODE] generate | docs: {len(state['documents'])}")
+    if state['documnet']:
+        context = '\n\n---\n\n'.join(
+            f'[source: {doc.metadata.get('filename', '?')}]'
+            f'page {doc.metadata.get('page','?')}'
+            f'{doc.page_content}'
+            for doc in state['documents']
+        )
+    else:
+        context = "No relevant documents found in the knowledge base."
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are a precise document assistant.
+Answer the question using ONLY the context provided.
+If the context does not contain enough information, say:
+"The documents don't contain enough information to answer this."
+Always mention which document/page your answer comes from."""),
+        *state.get("chat_history", []),
+        ("human", "Context:\n{context}\n\nQuestion: {question}"),
+    ])
+
+    chain = prompt | llm | StrOutputParser()
+    answer = chain.invoker({
+        'context': context,
+        'question': state['original_question'],
+    })
+
+    new_history = [
+        HumanMessage(content = state['original_question']),
+        AIMessage(content = answer)
+    ]
+
+    return {
+        'generation': answer,
+        'chat_history': new_history,
+        'answer_grade':''
+    }
+
+def grade_answer(state:GraphState) -> GraphState:
+    print(f"[NODE] grade_answer | checking groundedness...")
+
+    if not state['documents']:
+        return {'answer_grade': 'groundes'}
+    
+
+    grader_prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are a hallucination grader.
+    Check if the answer is fully supported by the provided context.
+    Reply with EXACTLY one word: 'grounded' or 'hallucinated'"""),
+            ("human", """Context:
+    {context}
+
+    Answer:
+    {answer}"""),
+    ])
+
+    context = '\n\n'.join(d.page_content for d in state['document'])
+    chain = grade_answer | grader_llm | StrOutputParser()
+    grade = chain.invoke({
+        'context': context[:3000],
+        'answer': state['generation'],
+
+    }).strip().lower()
+
+    answer_grade = 'grounded' if 'grounded' in grade else 'hallucinated'
+    print(f"[NODE] grade_answer | {answer_grade}")
+
+    return {"answer_grade": answer_grade}
+
+def regenerate(state: GraphState) -> GraphState:
+    print(f"[NODE] regenerate | retrying with stricter prompt...")
+    
+    context = '\n\n---\n\n'.join(
+        doc.page_content for doc in state['documents']
+    )
+
+    stric_prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are an extremely precise document assistant.
+    STRICT RULES:
+    1. Use ONLY information explicitly stated in the context below
+    2. Do NOT add any information from your training knowledge
+    3. If the answer is not in the context, say exactly:
+    "This information is not available in the provided documents."
+    4. Quote directly from the context where possible"""),
+            ("human", "Context:\n{context}\n\nQuestion: {question}"),
+    ])
+    chain = stric_prompt | llm | StrOutputParser()
+    answer = chain.invoke({
+        'context': context,
+        'question': state['original_question'],
+    })
+
+    new_history = [
+        HumanMessage(content=state["original_question"]),
+        AIMessage(content=answer),
+    ]
+
+    return {
+        "generation":   answer,
+        "chat_history": new_history,
+        "answer_grade": "grounded",   # force end — don't loop again
+    }
+
+
+# CONDITIONAL EDGE FUNCTIONS — pure routing logic
+
+
+def route_after_query_classification(state: GraphState) -> str:
+    query_type = state.get('query_type','rag')
+    if query_type in ('conversational', 'summarize'):
+        return 'direct_llm'
+    return 'retrieve'
+
+def route_after_grading(state: GraphState)-> str:
+    doc_grade = state.get('doc_grade', 'relevant')
+    rewrite_count = state.get('rewrite_count', 0)
+
+    if doc_grade == 'not_relevant' and rewrite_count < settings.MAX_REWRITE_ATTEMPTS:
+        return 'rewrite_query'
+    return 'generate'
+
+def route_after_answer_grading(state: GraphState) -> str:
+    grade = state.get('answer_grade', 'grounded')
+    if grade == 'hallucinated':
+        return 'regenerate'
+    return 'end'
+
+
+
+
 
 
 
