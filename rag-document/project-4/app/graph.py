@@ -67,6 +67,5 @@ def build_rag_graph():
     return graph.compile()
 
 
-
-
+rag_graph = build_rag_graph()
 

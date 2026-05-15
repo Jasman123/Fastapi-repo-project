@@ -145,10 +145,10 @@ or expand abbreviations. Return ONLY the rewritten query."""),
 
 def generate(state:GraphState) -> GraphState:
     print(f"[NODE] generate | docs: {len(state['documents'])}")
-    if state['documnet']:
+    if state['documents']:
         context = '\n\n---\n\n'.join(
-            f'[source: {doc.metadata.get('filename', '?')}]'
-            f'page {doc.metadata.get('page','?')}'
+            f'[source: {doc.metadata.get("filename", "?")}]'
+            f'page {doc.metadata.get("page", "?")}'
             f'{doc.page_content}'
             for doc in state['documents']
         )
@@ -166,7 +166,7 @@ Always mention which document/page your answer comes from."""),
     ])
 
     chain = prompt | llm | StrOutputParser()
-    answer = chain.invoker({
+    answer = chain.invoke({
         'context': context,
         'question': state['original_question'],
     })

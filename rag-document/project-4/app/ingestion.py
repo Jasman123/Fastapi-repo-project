@@ -1,6 +1,6 @@
 from pathlib import Path
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_milvus import Milvus
 from langchain_openai import OpenAIEmbeddings
 from pymilvus import connections, utility, Collection
@@ -19,7 +19,7 @@ def get_vectorstore() -> Milvus:
     return Milvus(
         embedding_function = embeddings,
         collection_name = settings.MILVUS_COLLECTION,
-        connection_arg = MILVUS_CONNECTION,
+        connection_args = MILVUS_CONNECTION,
         auto_id = True,
         drop_old = False,
     )
@@ -48,7 +48,7 @@ def ingest_file(file_path: str, filename: str) -> dict:
     
     splitter = RecursiveCharacterTextSplitter(
         chunk_size = settings.CHUNK_SIZE,
-        chunk_overplap = settings.CHUNK_OVERLAP,
+        chunk_overlap = settings.CHUNK_OVERLAP,
         separators=["\n\n", "\n", ". ", " ", ""],
     )
 
@@ -56,7 +56,7 @@ def ingest_file(file_path: str, filename: str) -> dict:
 
     for chunk in chunks:
         chunk.metadata["filename"] = filename
-        chunk.metadate["source"] = str(path)
+        chunk.metadata["source"] = str(path)
 
     vectorstore = get_vectorstore()
     ids = vectorstore.add_documents(chunks)

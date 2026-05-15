@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pathlib import Path
-from ..ingestion import ensure_collection, ingest_file, delete_document, list_document
+from ..ingestion import ensure_collection, ingest_file, delete_document, list_documents
 from ..graph import rag_graph
 
 
@@ -32,7 +32,7 @@ session_store: dict[str, list] = {}
 @router.post('/ingest', status_code=201)
 async def ingest_document(file: UploadFile = File(...)):
     suffix = Path(file.filename).suffix.lower()
-    if suffix in {'.pdf', '.tx'}:
+    if suffix not in {'.pdf', '.txt'}:
         raise HTTPException(status_code=415, detail= f'Please use extension .pdf or .txt, not {suffix}')
     save_path = Path('uploads')/file.filename
     save_path.write_bytes(await file.read())
@@ -98,7 +98,7 @@ async def ask_question(request: QuestionRequest):
 
 @router.get('/documents')
 def get_documents():
-    return {'document': list_document()}
+    return {'document': list_documents()}
 
 
 @router.delete('/document/{filename}', status_code=204)
