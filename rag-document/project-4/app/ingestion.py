@@ -1,7 +1,7 @@
 from pathlib import Path
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_milvus import Milvus
+from langchain_milvus import Milvus as _BaseMilvus
 from langchain_openai import OpenAIEmbeddings
 from pymilvus import connections, utility, Collection
 from .config import settings
@@ -15,6 +15,17 @@ MILVUS_CONNECTION = {
     "uri": settings.MILVUS_URI
 }
 
+# pymilvus 2.6.x MilvusClient uses ConnectionManager aliases ("cm-...") that are
+# not registered in the ORM connections registry, so Collection(using=alias) fails.
+# Override col to return None so langchain_milvus falls back to MilvusClient paths.
+class Milvus(_BaseMilvus):
+    @property
+    def col(self):
+        try:
+            return super().col
+        except Exception:
+            return None
+
 def get_vectorstore() -> Milvus:
     return Milvus(
         embedding_function = embeddings,
@@ -22,6 +33,7 @@ def get_vectorstore() -> Milvus:
         connection_args = MILVUS_CONNECTION,
         auto_id = True,
         drop_old = False,
+        enable_dynamic_field = True,
     )
 
 def ensure_collection() -> None:
@@ -55,8 +67,11 @@ def ingest_file(file_path: str, filename: str) -> dict:
     chunks = splitter.split_documents(documents)
 
     for chunk in chunks:
-        chunk.metadata["filename"] = filename
-        chunk.metadata["source"] = str(path)
+        chunk.metadata = {
+            "filename": filename,
+            "source": str(path),
+            "page": chunk.metadata.get("page", 0),
+        }
 
     vectorstore = get_vectorstore()
     ids = vectorstore.add_documents(chunks)
