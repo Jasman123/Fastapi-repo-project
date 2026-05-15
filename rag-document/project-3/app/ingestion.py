@@ -52,7 +52,7 @@ async def ingest_file(file_path: str, filename: str) -> dict:
     vectorstore = QdrantVectorStore(
         client = qdrant_client,
         collection_name = settings.QDRANT_COLLECTION,
-        embeddings = embeddings,
+        embedding = embeddings,
     )
 
     ids = vectorstore.add_documents(chunks)

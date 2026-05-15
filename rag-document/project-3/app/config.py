@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION: str = "documents"
     CHUNK_SIZE: int = 800
     CHUNK_OVERLAP: int = 100
-    RETRIEVER_K: int = 4
+    RETRIEVER_K: int = 5
     QDRANT_VECTOR_SIZE: int = 1536
 
     @field_validator("OPENAI_API_KEY")
