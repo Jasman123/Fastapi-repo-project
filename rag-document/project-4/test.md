@@ -6,7 +6,7 @@ curl -X POST http://localhost:8000/ingest \
 # Ask — RAG question
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "What does the document say about X?", "session_id": "u1"}'
+  -d '{"question": "What does the document say about?", "session_id": "u1"}'
 
 # Ask — conversational (routes to direct_llm, skips Milvus)
 curl -X POST http://localhost:8000/ask \

@@ -83,7 +83,7 @@ def retrieve(state: GraphState) -> GraphState:
 
     vectorstore = get_vectorstore()
     retriever = vectorstore.as_retriever(
-        search_type='similiarity',
+        search_type='similarity',
         search_kwargs = {'k' : settings.RETRIEVER_K},
     )
     documents = retriever.invoke(state['question'])
@@ -186,7 +186,7 @@ def grade_answer(state:GraphState) -> GraphState:
     print(f"[NODE] grade_answer | checking groundedness...")
 
     if not state['documents']:
-        return {'answer_grade': 'groundes'}
+        return {'answer_grade': 'grounded'}
     
 
     grader_prompt = ChatPromptTemplate.from_messages([

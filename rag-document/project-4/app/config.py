@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     MILVUS_COLLECTION: str = "documents"
     CHUNK_SIZE: int = 800
     CHUNK_OVERLAP: int = 100
-    RETRIEVER_K: int = 4
+    RETRIEVER_K: int = 5
     MAX_REWRITE_ATTEMPTS: str = 3
 
     model_config = {"env_file": ".env"}
