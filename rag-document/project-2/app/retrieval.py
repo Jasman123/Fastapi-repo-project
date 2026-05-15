@@ -36,7 +36,7 @@ def format_docs(docs: list[Document]) -> str:
     for doc in docs:
         source = doc.metadata.get("source", "unknown source")
         page = doc.metadata.get("page", "")
-        header = f'[Source: {source}'+ (f', Page: {page+1}' if page else '') + ']'
+        header = f'[Source: {source}'+ (f', Page: {page+1}' if page != "" else '') + ']'
         formated_docs.append(f"{header}\n{doc.page_content}")
 
     return "\n\n".join(formated_docs)
@@ -44,14 +44,14 @@ def format_docs(docs: list[Document]) -> str:
 def build_rag_chain(vectorstore: Chroma):
 
     retriever = vectorstore.as_retriever(
-        search_type = "mmr",
+        search_type = "similarity",
         search_kwargs = {"k": settings.TOP_K},
     )
 
     chain =(
         {
             "context": retriever | format_docs,
-            "question": RunnablePassThrough()
+            "question": RunnablePassthrough()
         }
         | RAG_PROMPT
         | llm
@@ -61,8 +61,6 @@ def build_rag_chain(vectorstore: Chroma):
     return chain, retriever
 
 async def query_documents(question: str, vectorstore: Chroma) -> dict:
-    
-    vectorstore = get_vectorstore()
     if not vectorstore._collection.count():
         return {"answer": "No documents have been ingested yet. Please upload a document first.",
                 "source": [],

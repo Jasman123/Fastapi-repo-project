@@ -8,9 +8,8 @@ from .retrieval import query_documents
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    vectorstore = get_vectorstore()
+    get_vectorstore()
     yield
-    vectorstore.persist()
 
 
 app = FastAPI(lifespan=lifespan, 
