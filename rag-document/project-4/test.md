@@ -9,9 +9,6 @@ curl -X POST http://localhost:8000/ask \
   -d '{"question": "What does the document say about?", "session_id": "u1"}'
 
 # Ask — conversational (routes to direct_llm, skips Milvus)
-curl -X POST http://localhost:8000/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Hello, how are you?", "session_id": "u1"}'
 
 # Follow-up — uses chat history
 curl -X POST http://localhost:8000/ask \
