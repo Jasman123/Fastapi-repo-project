@@ -1,10 +1,8 @@
-versionL "3.9"
 
+version: "3.9"
 services:
-
-
   minio:
-    imahe: minio/minio
+    image: minio/minio
     container_name: minio
     ports:
       - "9000:9000"
@@ -14,19 +12,19 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     command: server /data --console-address ":9001"
     volumes:
-      -minio_data:/data
+      - minio_data:/data
 
   postgres:
     image: postgres:15
     container_name: postgres
-    port:
-      -"5432:5432"
-    enviroment:
+    ports:
+      - "5432:5432"
+    environment:
       POSTGRES_USER: docuser
       POSTGRES_PASSWORD: docpass
       POSTGRES_DB: docstore
     volumes:
-     - pg_data: /var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
 
 volumes:
   minio_data:
