@@ -1,4 +1,3 @@
-
 version: "3.9"
 services:
   minio:
@@ -20,9 +19,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: docuser
-      POSTGRES_PASSWORD: docpass
-      POSTGRES_DB: docstore
+      POSTGRES_USER: noteuser
+      POSTGRES_PASSWORD: notepass
+      POSTGRES_DB: notestore
     volumes:
       - pg_data:/var/lib/postgresql/data
 

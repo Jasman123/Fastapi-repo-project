@@ -1,71 +1,65 @@
-import sysconfig
-from typing import Optional
-from app.config import get_settings
-
-
-_pool: asyncpg.Pool | None = None
-
-async def init_db() -> None:
-    global _pool
-    cfg = get_settings()
-
-    _pool = await asyncpg.create_pool(
-        dsn = cfg.postgres_dsn,
-        min_size = 2,
-        max_size = 10,
-    )
-
-    await _pool.execute(
-        """
-CREATE TABLE IF NOT EXISTS doucments(
-id TEX PRIMARY KEY,
-filename TEXT NOT NULL,
-content_type TEXT NOT NULL,
-Size_bytes INTEGER NOT NULL,
-storage_key TEXT NOT NULL UNIQUE,
-uploaded_at TIMESTAMPTZ DEFAULT NOW()
+from typing import AsyncGenerator, Optional
+from sqlalchemy.ext.asyncio import (
+    create_async_engine, async_sessionmaker, AsyncSession
 )
-"""
+
+from sqlalchemy import select, delete, update
+from app.config import get_settings
+from app.models import Note
+
+
+cfg = get_settings()
+
+engine = create_async_engine(cfg.postgres_dsn, echo=False)
+AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+async def db_create(session: AsyncSession, note: dict) -> dict:
+    obj = Note(
+        id=note["id"], title=note["title"], body=note["body"],
+        attachment_key=note.get("attachment_key", ""),
+        attachment_name=note.get("attachment_name", "noname"),
     )
 
+    session.add(obj)
+    await session.commit()
+    await session.refresh(obj)
+    return obj.to_dict()
 
-async def close_db() -> None:
-    global _pool
-    if _pool: 
-        await _pool.close()
 
-def get_pool() -> asyncpg.Pool:
-    if _pool is None:
-        raise RuntimeError("Call ini_db() first")
-    return _pool
+async def db_get(session: AsyncSession, note_id: str) -> Optional[dict]:
+    result = await session.execute(select(Note).where(Note.id == note_id))
+    row = result.scalar_one_or_none()
+    return row.to_dict() if row else None
 
-async def db_save(doc: dict) -> None:
-    await get_pool().execute(
-        """
-INSERT INTO documents
-(id, filename, content_type, size_bytes, storage_key)
-VALUES($1, $2, $3, $4, $5)
-""", doc["id"], doc["filename"], doc["content_type"], doc["size_bytes"], doc['storage_key'],
+
+async def db_list(session: AsyncSession) -> list[dict]:
+    result = await session.execute(
+        select(Note).order_by(Note.created_at.desc())
     )
 
-async def db_find(doc_id: str) -> Optional[dict]:
-    row = await get_pool().fecthrow(
-        "SELECT * FROM documents WHERE id = $1". doc_id
-    )
-    return dict(row) if row else None
+    return [r.to_dict() for r in result.scalars().all()]
 
-async def db_list() -> list[dict]:
-    rows = await get_pool().fecth(
-        "SELECT * FROM documents ORDER BY uploaded_at DESC"
-    )
-    return [dict(r) for r in rows]
+async def db_update(session: AsyncSession, note_id: str, fields: dict) -> Optional[dict]:
+    result = await session.execute(update(Note).where(Note.id == note_id).values(**fields).returning(Note))
 
-async def db_delete(doc_id: str) -> bool:
-    result = await get_pool().execute(
-        "DELETE FROM documents WHERE id = $1", doc_id
-    )
-    return result == "DELETE 1"
+    await session.commit()
+    row = result.scalar_one_or_none()
+    return row.to_dict() if row else None
 
 
+async def db_delete(session: AsyncSession, note_id: str) -> bool:
+    result = await session.execute(delete(Note).where(Note.id == note_id))
+    await session.commit()
+    return result.rowcount == 1
 
-
+async def db_set_attachment(session: AsyncSession, note_id: str, attachment_key: str, attachment_name: str) -> Optional[dict]:
+    return await db_update(session, note_id, {
+        "attachment_key": attachment_key,
+        "attachment_name": attachment_name,
+    },)

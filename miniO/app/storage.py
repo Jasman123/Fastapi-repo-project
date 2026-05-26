@@ -1,74 +1,61 @@
 import io
 import asyncio
 from datetime import timedelta
-from functools import lru_cache
-
 from minio import Minio
 from minio.error import S3Error
 
-from app.config import get_settings
 
+class MiniOStorage:
 
-@lru_cache()
-def _client() -> Minio:
-    cfg = get_settings()
-    return Minio(
-        endpoint= cfg.minio_endpoint,
-        access_key= cfg.minio_access_key,
-        secret_key= cfg.minio_secret_key,
-        secure= cfg.minio_secure,
-    )
+    def __init__(self, client: Minio, bucket: str, expiry_minutes: int):
+        self._client = client
+        self._bucket = bucket
+        self._expiry = expiry_minutes
 
-async def ensure_bucket() -> None:
-    cfg = get_settings()
-    c = _client()
+    
+    async def upload(self, key: str, data: bytes, content_type: str) -> None:
+        def _run():
+            self._client.put_object(
+                bucket_name = self._bucket,
+                object_name = key, 
+                data = io.BytesIO(data),
+                length = len(data),
+                content_type = content_type,
+            )
+        await asyncio.to_thread(_run)
+    
+    async def download(self, key: str) -> bytes:
+        def _run():
+            resp = None
+            try:
+                resp = self._client.get_object(self._bucket, key)
+                return resp.read()
+            finally:
+                if resp:
+                    resp.close()
+                    resp.release_conn()
 
-    exists = await asyncio.to_thread(c.bucket_exists, cfg.minio_bucket)
-    if not exists:
-        await asyncio.to_thread(c.make_bucket, cfg.minio_bucket)
-
-async def upload(key: str, data: bytes, content_type: str) -> None:
-    cfg = get_settings()
-
-    def _run():
-        _client.put_object(
-            bucket_name = cfg.minio_bucket,
-            object_name = key,
-            data = io.BytesIO(data),
-            length = len(data),
-            content_type = content_type,
+        return await asyncio.to_thread(_run)
+    
+    async def remove(self, key: str) -> None:
+        await asyncio.to_thread(
+            self._client.remove_object, self._bucket, key
         )
-    await asyncio. to_thread(_run)
+
+    async def presign(self, key: str) -> str:
+        return await asyncio.to_thread(
+            self._client.presigned_get_object,
+            self._bucket,
+            key,
+            timedelta(minutes=self._expiry)
+        )
+    
+    async def ensure_bucket(self) -> None:
+        exists = await asyncio.to_thread(
+            self._client.bucket_exists, self._bucket
+        )
+
+        if not exists:
+            await asyncio.to_thread(self._client.make_bucket, self._bucket)
 
 
-async def download(key: str) -> bytes:
-    cfg = get_settings()
-    def _run():
-        resp = None
-        try:
-            resp = _client().get_object(cfg.minio_bucket, key)
-            return resp.read()
-        
-        finally:
-            if resp:
-                resp.close()
-                resp.release_conn()
-
-    return await asyncio.to_thread(_run)
-
-async def remove(key: str) -> None:
-    cfg = get_settings()
-    await asyncio.to_thread(
-        _client().remove_bucket, cfg.minio_bucket, key
-    )
-
-async def presign(key: str) -> str:
-    cfg = get_settings()
-    url = await asyncio.to_thread(   
-        _client().presigned_get_object,
-        cfg.minio_bucket,
-        key,
-        timedelta(minutes=cfg.presign_expiry_minutes)
-    )
-
-    return url
