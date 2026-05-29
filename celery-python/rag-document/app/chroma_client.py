@@ -1,5 +1,5 @@
 import chromadb
-from chromadb.config import settings as ChromaSettings
+from chromadb.config import Settings as ChromaSettings
 from functools import lru_cache
 from app.config import get_settings
 
@@ -8,7 +8,7 @@ from app.config import get_settings
 def get_chroma_client() -> chromadb.PersistentClient:
     settings = get_settings()
     return chromadb.PersistentClient(
-        path = settings.chroma_persits_dir, settings = ChromaSettings(anonymezed_telemtry=False),
+        path = settings.chroma_persits_dir, settings = ChromaSettings(anonymized_telemetry=False),
     )
 
 def get_collection():

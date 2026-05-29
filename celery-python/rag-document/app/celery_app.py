@@ -16,16 +16,16 @@ celery_app.conf.update(
     result_serializer="json",
 
     task_acks_late = True,
-    task_reject_on_worker_lost = True
+    task_reject_on_worker_lost = True,
     task_track_started = True,
 
 
-    Task_time_limit = 600,
+    task_time_limit = 600,
     task_soft_time_limit=540,
 
 
-    worker_prefecth_multiplier =1,
-    worker_max_task_per_child=50,
+    worker_prefetch_multiplier=1,
+    worker_max_tasks_per_child=50,
 
     result_expires = 3600,
     timezone = "Asia/Jakarta",
