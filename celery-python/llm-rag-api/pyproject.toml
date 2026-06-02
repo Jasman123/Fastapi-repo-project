@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "llm-rag-api"
+version = "0.3.0"
+description = "Production RAG API with LangGraph"
+authors = ["Your Name <you@example.com>"]
+python = "^3.11"
+
+[tool.poetry.dependencies]
+fastapi = "0.115.0"
+uvicorn = {extras = ["standard"], version = "0.32.0"}
+pydantic = "2.9.2"
+pydantic-settings = "2.6.0"
+
+# Celery
+celery = "5.4.0"
+redis = "5.1.1"
+
+# AI/ML
+openai = "1.54.0"
+langchain = "0.3.7"
+langchain-openai = "0.2.8"
+langchain-chroma = "0.1.4"
+langchain-text-splitters = "0.3.2"
+langgraph = "0.2.50"
+chromadb = "0.5.15"
+
+# PDF
+pypdf = "5.1.0"
+
+# Utils
+python-multipart = "0.0.12"
+structlog = "24.4.0"
