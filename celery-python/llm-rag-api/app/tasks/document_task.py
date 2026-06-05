@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @celery_app.task(
     bind = True,
-    name = "app.tasks.cdocumnet_task.ingest_text",
+    name = "app.tasks.documnet_task.ingest_text",
     autoretry_for = (ConnectionError, TimeoutError, OpenAIRateLimitError),
     max_retries = 3,
     retry_backoff = True,
