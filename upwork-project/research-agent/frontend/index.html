@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ResearchAgent — Automated Intelligence Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ── Reset & tokens ─────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0f11;
+    --surface:  #141618;
+    --panel:    #1a1d20;
+    --border:   rgba(255,255,255,0.07);
+    --border2:  rgba(255,255,255,0.13);
+    --text:     #e8e6e0;
+    --muted:    #7a7870;
+    --accent:   #c8a96e;       /* warm gold */
+    --accent2:  #4f8ef7;       /* electric blue for links/progress */
+    --danger:   #e05a5a;
+    --success:  #5ab87a;
+    --serif:    'DM Serif Display', Georgia, serif;
+    --mono:     'DM Mono', 'Courier New', monospace;
+    --sans:     'DM Sans', system-ui, sans-serif;
+    --radius:   6px;
+    --radius-lg:12px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    min-height: 100vh;
+    /* subtle grid texture */
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ── Layout shell ──────────────────────────────────── */
+  .shell {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── Header ────────────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 0 22px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .logo span { color: var(--accent); font-style: italic; }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  /* ── Hero input area ───────────────────────────────── */
+  .hero {
+    padding: 52px 0 36px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .hero-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(32px, 5vw, 50px);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: -0.5px;
+    max-width: 640px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  /* ── Search form ───────────────────────────────────── */
+  .search-form {
+    margin-top: 32px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    transition: border-color 0.2s;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,169,110,0.1);
+  }
+
+  .input-icon {
+    padding: 0 14px 0 18px;
+    color: var(--muted);
+    font-size: 18px;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  #topic-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    padding: 16px 0;
+    min-width: 0;
+  }
+
+  #topic-input::placeholder { color: var(--muted); }
+
+  .run-btn {
+    margin: 0 8px;
+    padding: 10px 22px;
+    background: var(--accent);
+    color: #0d0f11;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .run-btn:hover { opacity: 0.88; }
+  .run-btn:active { transform: scale(0.97); }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Options row */
+  .options-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .opt-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .opt-group label { cursor: pointer; }
+
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    outline: none;
+  }
+
+  select:focus { border-color: var(--accent); }
+
+  .api-key-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .api-key-row label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  #api-key-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    max-width: 260px;
+  }
+
+  #api-key-input:focus { border-color: var(--border2); color: var(--text); }
+
+  #api-url-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    max-width: 340px;
+  }
+
+  #api-url-input:focus { border-color: var(--border2); color: var(--text); }
+
+  /* ── Pipeline visualizer ───────────────────────────── */
+  .pipeline-section {
+    margin-top: 44px;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+  }
+
+  .pipeline-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Pipeline nodes */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .pipeline::-webkit-scrollbar { display: none; }
+
+  .pipe-node {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    position: relative;
+  }
+
+  .pipe-node-inner {
+    width: 130px;
+    padding: 12px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-align: center;
+    transition: border-color 0.3s, background 0.3s, transform 0.2s;
+    cursor: default;
+  }
+
+  .pipe-node-inner .node-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    transition: color 0.3s;
+  }
+
+  .pipe-node-inner .node-desc {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+    opacity: 0.6;
+    line-height: 1.3;
+    transition: color 0.3s;
+  }
+
+  /* Status dot */
+  .node-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--border2);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+
+  /* States */
+  .pipe-node.active .pipe-node-inner {
+    border-color: var(--accent);
+    background: rgba(200,169,110,0.06);
+    transform: translateY(-2px);
+  }
+
+  .pipe-node.active .node-name { color: var(--accent); }
+  .pipe-node.active .node-dot {
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(200,169,110,0.7);
+    animation: pulse-dot 1s ease-in-out infinite;
+  }
+
+  .pipe-node.done .pipe-node-inner { border-color: rgba(90,184,122,0.4); }
+  .pipe-node.done .node-name { color: var(--success); }
+  .pipe-node.done .node-dot { background: var(--success); }
+
+  .pipe-node.error .pipe-node-inner { border-color: rgba(224,90,90,0.4); }
+  .pipe-node.error .node-name { color: var(--danger); }
+  .pipe-node.error .node-dot { background: var(--danger); }
+
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 6px rgba(200,169,110,0.6); }
+    50%       { box-shadow: 0 0 14px rgba(200,169,110,0.9); }
+  }
+
+  /* Connector line between nodes */
+  .pipe-connector {
+    flex: 1;
+    min-width: 20px;
+    height: 1px;
+    background: var(--border);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .pipe-connector::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: -1px;
+    border: 4px solid transparent;
+    border-left: 6px solid var(--border);
+  }
+
+  .pipe-connector.lit { background: rgba(90,184,122,0.4); }
+  .pipe-connector.lit::after { border-left-color: rgba(90,184,122,0.4); }
+
+  /* ── Log feed ──────────────────────────────────────── */
+  .log-feed {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .log-feed::-webkit-scrollbar { width: 4px; }
+  .log-feed::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .log-line {
+    padding: 2px 0;
+    display: flex;
+    gap: 10px;
+    animation: fadein 0.2s ease;
+  }
+
+  @keyframes fadein { from { opacity: 0; transform: translateX(-4px); } }
+
+  .log-line .ts {
+    color: var(--border2);
+    min-width: 56px;
+    user-select: none;
+  }
+
+  .log-line.info .msg  { color: var(--muted); }
+  .log-line.ok .msg    { color: var(--success); }
+  .log-line.warn .msg  { color: var(--accent); }
+  .log-line.err .msg   { color: var(--danger); }
+
+  /* ── Progress bar ──────────────────────────────────── */
+  .progress-wrap {
+    margin-top: 16px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 1px;
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+
+  /* ── Result area ───────────────────────────────────── */
+  .result-section {
+    margin-top: 44px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+    pointer-events: none;
+  }
+
+  .result-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* Meta bar */
+  .meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 14px 18px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: none;
+  }
+
+  .meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .meta-chip .val {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .meta-chip .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+
+  .result-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-top: none;
+    background: var(--surface);
+  }
+
+  .tab-btn {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .tab-btn:last-child { border-right: none; }
+  .tab-btn:hover { color: var(--text); background: var(--panel); }
+
+  .tab-btn.active {
+    color: var(--accent);
+    background: var(--panel);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  /* Tab panels */
+  .tab-panel {
+    display: none;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    background: var(--surface);
+  }
+
+  .tab-panel.active { display: block; }
+
+  /* Markdown report panel */
+  .report-body {
+    padding: 32px 36px;
+    max-height: 560px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+  }
+
+  .report-body::-webkit-scrollbar { width: 4px; }
+  .report-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Rendered markdown styles */
+  .report-body h1 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .report-body h2 {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--accent);
+    margin: 28px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .report-body h3 {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin: 20px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .report-body p { margin-bottom: 14px; }
+
+  .report-body ul, .report-body ol {
+    padding-left: 22px;
+    margin-bottom: 14px;
+  }
+
+  .report-body li { margin-bottom: 5px; }
+
+  .report-body a { color: var(--accent2); text-decoration: none; }
+  .report-body a:hover { text-decoration: underline; }
+
+  .report-body strong { color: var(--text); font-weight: 500; }
+
+  .report-body blockquote {
+    border-left: 2px solid var(--accent);
+    padding-left: 16px;
+    color: var(--muted);
+    margin: 16px 0;
+    font-style: italic;
+  }
+
+  .report-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  .report-body code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--panel);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent);
+  }
+
+  .report-body pre {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 14px;
+  }
+
+  .report-body pre code {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* Queries panel */
+  .queries-panel { padding: 20px 24px; }
+
+  .query-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadein 0.25s ease;
+  }
+
+  .query-item:last-child { border-bottom: none; }
+
+  .query-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 24px;
+    margin-top: 2px;
+  }
+
+  .query-text {
+    font-size: 14px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .query-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(90,184,122,0.12);
+    color: var(--success);
+    border: 1px solid rgba(90,184,122,0.2);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Sources panel */
+  .sources-panel { padding: 20px 24px; }
+
+  .source-card {
+    padding: 14px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    animation: fadein 0.25s ease;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    text-decoration: none;
+    display: block;
+  }
+
+  .source-card:hover { border-color: var(--border2); }
+
+  .source-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .source-url {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 8px;
+  }
+
+  .source-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .source-point {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--muted);
+  }
+
+  .relevance-bar {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .relevance-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 1px;
+    transition: width 0.6s ease;
+  }
+
+  /* Raw markdown panel */
+  .raw-panel {
+    padding: 0;
+  }
+
+  .raw-panel pre {
+    margin: 0;
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 560px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  /* ── Example topics ────────────────────────────────── */
+  .examples {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .example-chip {
+    font-size: 12px;
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    font-family: var(--sans);
+  }
+
+  .example-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Error banner ──────────────────────────────────── */
+  .error-banner {
+    display: none;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(224,90,90,0.08);
+    border: 1px solid rgba(224,90,90,0.25);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--danger);
+    font-family: var(--mono);
+  }
+
+  .error-banner.visible { display: block; }
+
+  /* ── Empty state ───────────────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    opacity: 0.3;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+
+  /* ── Elapsed timer ─────────────────────────────────── */
+  .timer-display {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 10px;
+    min-height: 16px;
+  }
+
+  /* ── Footer ────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    margin-top: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Responsive tweaks ──────────────────────────────── */
+  @media (max-width: 640px) {
+    .pipeline { gap: 0; }
+    .pipe-node-inner { width: 100px; font-size: 10px; }
+    .meta-bar { gap: 12px; }
+    .result-actions { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">Research<span>Agent</span></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="badge">LangGraph</span>
+      <span class="badge">GPT-4</span>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-label">Automated Intelligence Reports</div>
+    <h1>Turn any topic into a <em>structured research report</em></h1>
+
+    <div class="search-form">
+
+      <!-- API config row -->
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:4px">
+        <div class="api-key-row">
+          <label for="api-url-input">API URL</label>
+          <input id="api-url-input" type="text" value="http://localhost:8000" placeholder="http://localhost:8000" />
+        </div>
+        <div class="api-key-row">
+          <label for="api-key-input">API Key</label>
+          <input id="api-key-input" type="password" value="dev-key-change-me" placeholder="dev-key-change-me" />
+        </div>
+      </div>
+
+      <!-- Topic input -->
+      <div class="input-wrap">
+        <div class="input-icon">⌕</div>
+        <input
+          id="topic-input"
+          type="text"
+          placeholder="e.g. Impact of generative AI on the Indonesian legal industry"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="run-btn" id="run-btn" onclick="runResearch()">Run →</button>
+      </div>
+
+      <!-- Options -->
+      <div class="options-row">
+        <div class="opt-group">
+          <label for="model-select">Model</label>
+          <select id="model-select">
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+          </select>
+        </div>
+        <div class="opt-group">
+          <label for="depth-select">Depth</label>
+          <select id="depth-select">
+            <option value="standard">Standard (4 queries)</option>
+            <option value="deep">Deep (8 queries)</option>
+            <option value="quick">Quick (2 queries)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Example topics -->
+      <div class="examples">
+        <span class="example-chip" onclick="setTopic(this)">AI agents in enterprise 2025</span>
+        <span class="example-chip" onclick="setTopic(this)">Quantum computing competitive landscape</span>
+        <span class="example-chip" onclick="setTopic(this)">Indonesia startup ecosystem trends</span>
+        <span class="example-chip" onclick="setTopic(this)">LLM fine-tuning vs RAG tradeoffs</span>
+      </div>
+
+    </div>
+
+    <div class="error-banner" id="error-banner"></div>
+  </section>
+
+  <!-- Pipeline visualizer -->
+  <section class="pipeline-section" id="pipeline-section">
+    <div class="section-label">Pipeline execution</div>
+
+    <div class="pipeline" id="pipeline">
+      <div class="pipe-node" id="node-plan_research">
+        <div class="node-dot"></div>
+        <div class="pipe-node-inner">
+          <div class="node-name">plan_research</div>
+          <div class="node-desc">Generating queries</div>
+        </div>
+      </div>
+      <div class="pipe-connector" id="conn-0"></div>
+      <div class="pipe-node" id="node-search_web">
+        <div class="node-dot"></div>
+        <div class="pipe-node-inner">
+          <div class="node-name">search_web</div>
+          <div class="node-desc">Web search loop</div>
+        </div>
+      </div>
+      <div class="pipe-connector" id="conn-1"></div>
+      <div class="pipe-node" id="node-extract_data">
+        <div class="node-dot"></div>
+        <div class="pipe-node-inner">
+          <div class="node-name">extract_data</div>
+          <div class="node-desc">Structure results</div>
+        </div>
+      </div>
+      <div class="pipe-connector" id="conn-2"></div>
+      <div class="pipe-node" id="node-synthesize">
+        <div class="node-dot"></div>
+        <div class="pipe-node-inner">
+          <div class="node-name">synthesize</div>
+          <div class="node-desc">Build narrative</div>
+        </div>
+      </div>
+      <div class="pipe-connector" id="conn-3"></div>
+      <div class="pipe-node" id="node-generate_report">
+        <div class="node-dot"></div>
+        <div class="pipe-node-inner">
+          <div class="node-name">generate_report</div>
+          <div class="node-desc">Write Markdown report</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="timer-display" id="timer-display"></div>
+
+    <div class="log-feed" id="log-feed">
+      <div class="log-line info"><span class="ts">--:--</span><span class="msg">Awaiting research topic…</span></div>
+    </div>
+  </section>
+
+  <!-- Result area -->
+  <section class="result-section" id="result-section">
+    <div class="section-label">Report output</div>
+
+    <div class="meta-bar" id="meta-bar">
+      <div class="meta-chip">
+        <div class="dot"></div>
+        <span>Status</span>
+        <span class="val" id="meta-status">—</span>
+      </div>
+      <div class="meta-chip">
+        <span>Queries</span>
+        <span class="val" id="meta-queries">—</span>
+      </div>
+      <div class="meta-chip">
+        <span>Sources</span>
+        <span class="val" id="meta-sources">—</span>
+      </div>
+      <div class="meta-chip">
+        <span>Elapsed</span>
+        <span class="val" id="meta-elapsed">—</span>
+      </div>
+      <div class="result-actions">
+        <button class="action-btn" onclick="copyReport()">Copy Markdown</button>
+        <button class="action-btn" onclick="downloadReport()">Download .md</button>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('report', this)">Report</button>
+      <button class="tab-btn" onclick="switchTab('queries', this)">Queries</button>
+      <button class="tab-btn" onclick="switchTab('sources', this)">Sources</button>
+      <button class="tab-btn" onclick="switchTab('raw', this)">Raw Markdown</button>
+    </div>
+
+    <!-- Report tab -->
+    <div class="tab-panel active" id="tab-report">
+      <div class="report-body" id="report-body">
+        <div class="empty-state">
+          <div class="icon">◎</div>
+          <p>Report will appear here after the pipeline completes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queries tab -->
+    <div class="tab-panel" id="tab-queries">
+      <div class="queries-panel" id="queries-panel">
+        <div class="empty-state"><p>No queries yet.</p></div>
+      </div>
+    </div>
+
+    <!-- Sources tab -->
+    <div class="tab-panel" id="tab-sources">
+      <div class="sources-panel" id="sources-panel">
+        <div class="empty-state"><p>No sources yet.</p></div>
+      </div>
+    </div>
+
+    <!-- Raw markdown tab -->
+    <div class="tab-panel" id="tab-raw">
+      <div class="raw-panel">
+        <pre id="raw-output"># No report generated yet.</pre>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>
+    <span>ResearchAgent v1.0 — LangGraph + FastAPI</span>
+    <span id="footer-job-id">Job ID: —</span>
+  </footer>
+
+</div>
+
+<!-- marked.js for Markdown rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.2.0/marked.min.js"></script>
+
+<script>
+/* ── State ────────────────────────────────────────── */
+let currentReport = '';
+let currentTopic  = '';
+let timerInterval = null;
+let timerStart    = null;
+let demoMode      = false;
+
+/* ── Pipeline node order (for progress steps) ──── */
+const NODES = ['plan_research','search_web','extract_data','synthesize','generate_report'];
+const PROGRESS_STEPS = [10, 30, 60, 80, 100];
+
+/* ── Utilities ───────────────────────────────────── */
+function now() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' +
+         d.getMinutes().toString().padStart(2,'0') + ':' +
+         d.getSeconds().toString().padStart(2,'0');
+}
+
+function log(msg, type = 'info') {
+  const feed = document.getElementById('log-feed');
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.innerHTML = `<span class="ts">${now()}</span><span class="msg">${msg}</span>`;
+  feed.appendChild(line);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log-feed').innerHTML = '';
+}
+
+function setNode(name, state) {
+  // state: '' | 'active' | 'done' | 'error'
+  const el = document.getElementById(`node-${name}`);
+  if (!el) return;
+  el.className = `pipe-node ${state}`.trim();
+}
+
+function setConnector(idx, lit) {
+  const el = document.getElementById(`conn-${idx}`);
+  if (!el) return;
+  el.className = `pipe-connector${lit ? ' lit' : ''}`;
+}
+
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function activateNode(idx) {
+  NODES.forEach((n, i) => {
+    if (i < idx) { setNode(n, 'done'); setConnector(i, true); }
+    else if (i === idx) setNode(n, 'active');
+    else setNode(n, '');
+  });
+  setProgress(PROGRESS_STEPS[idx] || 0);
+}
+
+function allNodesDone() {
+  NODES.forEach((n, i) => { setNode(n, 'done'); setConnector(i, true); });
+  setProgress(100);
+}
+
+function allNodesError(idx) {
+  NODES.forEach((n, i) => {
+    if (i < idx) setNode(n, 'done');
+    else if (i === idx) setNode(n, 'error');
+  });
+}
+
+function resetNodes() {
+  NODES.forEach(n => setNode(n, ''));
+  for (let i = 0; i < 4; i++) setConnector(i, false);
+  setProgress(0);
+}
+
+function startTimer() {
+  timerStart = Date.now();
+  timerInterval = setInterval(() => {
+    const s = ((Date.now() - timerStart) / 1000).toFixed(1);
+    document.getElementById('timer-display').textContent = `Elapsed: ${s}s`;
+  }, 100);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+function showSection(id) {
+  const el = document.getElementById(id);
+  el.classList.add('visible');
+}
+
+function setError(msg) {
+  const b = document.getElementById('error-banner');
+  b.textContent = `✕  ${msg}`;
+  b.classList.add('visible');
+}
+
+function clearError() {
+  const b = document.getElementById('error-banner');
+  b.classList.remove('visible');
+}
+
+/* ── Tab switching ───────────────────────────────── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+/* ── Example topic chips ─────────────────────────── */
+function setTopic(el) {
+  document.getElementById('topic-input').value = el.textContent;
+}
+
+/* ── Render report markdown ──────────────────────── */
+function renderReport(markdown) {
+  const body = document.getElementById('report-body');
+  if (typeof marked !== 'undefined') {
+    body.innerHTML = marked.parse(markdown);
+  } else {
+    body.innerHTML = `<pre style="white-space:pre-wrap">${markdown}</pre>`;
+  }
+}
+
+/* ── Populate queries tab ────────────────────────── */
+function renderQueries(queries) {
+  const panel = document.getElementById('queries-panel');
+  if (!queries || !queries.length) return;
+  panel.innerHTML = queries.map((q, i) => `
+    <div class="query-item">
+      <span class="query-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="query-text">${q}</span>
+      <span class="query-badge">executed</span>
+    </div>
+  `).join('');
+}
+
+/* ── Populate sources tab ────────────────────────── */
+function renderSources(data) {
+  const panel = document.getElementById('sources-panel');
+  if (!data || !data.length) {
+    panel.innerHTML = '<div class="empty-state"><p>No structured source data returned.</p></div>';
+    return;
+  }
+  panel.innerHTML = data.map(d => {
+    const rel = Math.round((d.relevance_score || 0) * 100);
+    const pts = (d.key_points || []).map(p => `<span class="source-point">${p}</span>`).join('');
+    return `
+      <a class="source-card" href="${d.source || '#'}" target="_blank" rel="noopener">
+        <div class="source-title">${d.title || 'Untitled'}</div>
+        <div class="source-url">${d.source || ''}</div>
+        <div class="relevance-bar"><div class="relevance-fill" style="width:${rel}%"></div></div>
+        <div class="source-points">${pts}</div>
+      </a>
+    `;
+  }).join('');
+}
+
+/* ── Copy / Download ────────────────────────────── */
+function copyReport() {
+  if (!currentReport) return;
+  navigator.clipboard.writeText(currentReport)
+    .then(() => {
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => { btn.textContent = orig; }, 1800);
+    });
+}
+
+function downloadReport() {
+  if (!currentReport) return;
+  const slug = currentTopic.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40);
+  const blob = new Blob([currentReport], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `report-${slug}-${Date.now()}.md`;
+  a.click();
+}
+
+/* ── Simulate pipeline steps for demo ───────────── */
+function simulatePipeline(onDone) {
+  const delays = [600, 1800, 1200, 1000, 1400];
+  const msgs = [
+    ['plan_research', 'LLM generating 4 targeted search queries…', 'info'],
+    ['search_web',    'Executing web searches (Tavily)…', 'info'],
+    ['extract_data',  'Structuring and scoring results…', 'info'],
+    ['synthesize',    'Building executive narrative…', 'info'],
+    ['generate_report','Composing full Markdown report…', 'warn'],
+  ];
+  let i = 0;
+  function step() {
+    if (i >= msgs.length) { onDone(); return; }
+    const [node, msg, type] = msgs[i];
+    activateNode(i);
+    log(msg, type);
+    setTimeout(() => { i++; step(); }, delays[i - 1] || 1000);
+  }
+  step();
+}
+
+/* ── Main research runner ────────────────────────── */
+async function runResearch() {
+  const topic = document.getElementById('topic-input').value.trim();
+  if (!topic) {
+    document.getElementById('topic-input').focus();
+    return;
+  }
+
+  const apiUrl = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+  const apiKey = document.getElementById('api-key-input').value.trim();
+
+  currentTopic = topic;
+  currentReport = '';
+  clearError();
+  clearLog();
+  resetNodes();
+  showSection('pipeline-section');
+
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('timer-display').textContent = '';
+  log(`Starting research: "${topic}"`, 'info');
+  startTimer();
+
+  /* ── Simulate node steps while API runs ─────── */
+  let stepIdx = 0;
+  const stepMsgs = [
+    'Generating search queries…',
+    'Executing web searches…',
+    'Extracting structured data…',
+    'Synthesizing findings…',
+    'Writing report…'
+  ];
+
+  function advanceStep() {
+    if (stepIdx < NODES.length) {
+      activateNode(stepIdx);
+      log(stepMsgs[stepIdx], 'info');
+      stepIdx++;
+    }
+  }
+
+  advanceStep(); // activate first node immediately
+  // Simulate intermediate node transitions (won't overshoot — API will finish)
+  const stepTimers = [2000, 5000, 9000, 13000].map((ms, i) =>
+    setTimeout(() => advanceStep(), ms)
+  );
+
+  try {
+    const resp = await fetch(`${apiUrl}/research`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      },
+      body: JSON.stringify({ topic }),
+    });
+
+    // Clear simulated step timers since we have real data now
+    stepTimers.forEach(t => clearTimeout(t));
+
+    if (!resp.ok) {
+      let detail = `HTTP ${resp.status}`;
+      try { const j = await resp.json(); detail = j.detail || detail; } catch {}
+      throw new Error(detail);
+    }
+
+    const data = await resp.json();
+
+    stopTimer();
+    allNodesDone();
+    log('Research complete ✓', 'ok');
+
+    /* Populate UI */
+    currentReport = data.report_markdown || '';
+
+    document.getElementById('meta-status').textContent  = data.status || 'completed';
+    document.getElementById('meta-queries').textContent = data.search_queries?.length || 0;
+    document.getElementById('meta-sources').textContent = data.sources_count || 0;
+    document.getElementById('meta-elapsed').textContent = `${data.elapsed_seconds}s`;
+    document.getElementById('footer-job-id').textContent = `Job ID: ${data.job_id}`;
+    document.getElementById('raw-output').textContent   = currentReport;
+    document.getElementById('timer-display').textContent = `Completed in ${data.elapsed_seconds}s`;
+
+    renderReport(currentReport);
+    renderQueries(data.search_queries);
+    // sources_count only from API — structured_data not returned
+    // (extend API to return it if needed)
+    renderSources([]);
+
+    showSection('result-section');
+
+  } catch (err) {
+    stepTimers.forEach(t => clearTimeout(t));
+    stopTimer();
+    const msg = err.message || String(err);
+
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
+      /* Demo mode — API not running locally */
+      log('API unreachable — running demo mode', 'warn');
+      demoMode = true;
+      runDemo(topic);
+      return;
+    }
+
+    allNodesError(stepIdx);
+    log(`Error: ${msg}`, 'err');
+    setError(msg);
+    document.getElementById('run-btn').disabled = false;
+  }
+}
+
+/* ── Demo mode (no backend) ──────────────────────── */
+function runDemo(topic) {
+  resetNodes();
+  clearLog();
+  startTimer();
+  log(`[DEMO] Research topic: "${topic}"`, 'warn');
+
+  simulatePipeline(() => {
+    stopTimer();
+    allNodesDone();
+    log('[DEMO] Report generated successfully', 'ok');
+
+    const demoReport = `# ${topic}: Research Report
+
+## Executive Summary
+
+This report examines the current landscape of **${topic}**, drawing on recent developments across industry, academia, and policy domains. The analysis covers key trends, major actors, and emerging challenges shaping this space in 2025.
+
+Key findings suggest accelerating adoption driven by cost reductions, new regulatory frameworks, and maturing tooling ecosystems. Critical open questions remain around standardization, liability, and long-term sustainability.
+
+## Background
+
+The domain of ${topic} has undergone substantial transformation over the past three years. Early fragmentation has given way to consolidation around a handful of dominant paradigms, each with distinct technical assumptions and commercial implications.
+
+Historical context reveals a pattern common to platform technologies: an initial period of experimentation, followed by a consolidation phase where switching costs rise and winner-take-most dynamics emerge.
+
+## Key Findings
+
+- **Market dynamics**: Significant capital concentration among three to five leading players, with a long tail of specialized niche operators
+- **Technology maturation**: Core infrastructure has stabilized; differentiation is shifting toward application-layer and vertical integration
+- **Regulatory posture**: Jurisdictions vary widely; the EU leads on prescriptive rules, while US and Asia-Pacific favor soft guidance with periodic enforcement signals
+- **Talent and capacity**: Skilled workforce remains the binding constraint; compensation inflation has moderated from 2023 peaks but remains elevated
+
+## Analysis & Implications
+
+The competitive implications are significant for organizations evaluating entry or expansion. First-mover advantages are declining in commoditized segments, but substantial moats remain in data-rich verticals where proprietary training sets confer durable differentiation.
+
+For enterprise adopters, the key decision is build vs. buy vs. partner. Vertically integrated offerings now cover 80% of common use cases at acceptable cost and performance thresholds — a threshold that would have required custom development two years ago.
+
+> "The window for differentiation through raw capability is closing. The new frontier is context, trust, and integration depth." — Composite synthesis of analyst perspectives
+
+## Conclusion
+
+${topic} is entering a period of productive maturity. The primary risks are no longer technical but organizational: change management, governance design, and the alignment of incentives across complex stakeholder ecosystems.
+
+Organizations that invest now in building institutional fluency — rather than waiting for the technology to further stabilize — are likely to compound advantages that will be difficult to replicate in a more crowded market.
+
+## Sources
+
+- Research synthesis based on ${Math.floor(Math.random()*8)+12} sources
+- Data current as of ${new Date().toLocaleDateString('en-GB', {month:'long',year:'numeric'})}
+- *Note: This is a demo report. Connect the API backend for live research.*
+`;
+
+    currentReport = demoReport;
+
+    const mockQueries = [
+      `${topic} market overview 2025`,
+      `${topic} key players and competitive landscape`,
+      `${topic} regulatory and policy developments`,
+      `${topic} future outlook and emerging trends`,
+    ];
+
+    document.getElementById('meta-status').textContent  = 'completed (demo)';
+    document.getElementById('meta-queries').textContent = '4';
+    document.getElementById('meta-sources').textContent = '12';
+    document.getElementById('meta-elapsed').textContent = `${((Date.now() - timerStart)/1000).toFixed(1)}s`;
+    document.getElementById('footer-job-id').textContent = 'Job ID: demo-' + Math.random().toString(36).slice(2,10);
+    document.getElementById('raw-output').textContent   = demoReport;
+    document.getElementById('timer-display').textContent = `Demo completed in ${((Date.now()-timerStart)/1000).toFixed(1)}s`;
+
+    renderReport(demoReport);
+    renderQueries(mockQueries);
+    renderSources([
+      { title: 'Market Analysis: ' + topic, source: 'https://example.com/market', key_points: ['43% CAGR', 'enterprise-led growth'], relevance_score: 0.95 },
+      { title: 'Regulatory Landscape Overview', source: 'https://example.com/regulation', key_points: ['EU AI Act implications', 'cross-border enforcement'], relevance_score: 0.87 },
+      { title: 'Technology Maturity Assessment', source: 'https://example.com/tech', key_points: ['infrastructure stabilization', 'application-layer differentiation'], relevance_score: 0.82 },
+    ]);
+
+    showSection('result-section');
+    document.getElementById('run-btn').disabled = false;
+  });
+}
+
+/* ── Enter key support ──────────────────────────── */
+document.getElementById('topic-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runResearch();
+});
+
+/* ── After run completes, re-enable button ──────── */
+// (handled inside try/catch branches above)
+document.addEventListener('DOMContentLoaded', () => {
+  // Re-enable button whenever pipeline section becomes visible and run finishes
+  const observer = new MutationObserver(() => {
+    const allDone = [...document.querySelectorAll('.pipe-node')]
+      .every(n => n.classList.contains('done') || !n.classList.contains('active'));
+    if (allDone) {
+      document.getElementById('run-btn').disabled = false;
+    }
+  });
+  document.querySelectorAll('.pipe-node').forEach(n =>
+    observer.observe(n, { attributes: true, attributeFilter: ['class'] })
+  );
+});
+</script>
+</body>
+</html>
