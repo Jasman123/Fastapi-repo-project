@@ -14,4 +14,11 @@ database/
 
 chroma_db/
 
+# Node / Playwright
+node_modules/
+package-lock.json
 
+# Test artifacts
+screenshots/
+playwright-report/
+test-results/
