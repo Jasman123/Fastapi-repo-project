@@ -8,8 +8,10 @@ logger = logging.getLogger(__name__)
 
 async def web_search(query: str) -> list[dict[str, Any]]:
     if settings.TAVILY_API_KEY:
-        return _tavily(query)
-    logger.warning("TAVILY_API_KEY not set - using DuckDuckGo fallback")
+        try:
+            return await _tavily(query)
+        except Exception as exc:
+            logger.warning(f"Tavily failed ({exc}), falling back to DuckDuckGo")
     return await _ddg(query)
 
 async def _tavily(query: str) -> list[dict[str, Any]]:
@@ -36,7 +38,7 @@ async def _ddg(query: str) -> list[dict[str, Any]]:
     from duckduckgo_search import DDGS
 
     def _sync():
-        with DDGS() as ddgs:
+        with DDGS(verify=False) as ddgs:
             return list(ddgs.text(query, max_results=settings.MAX_SEARCH_RESULTS))
         
 

@@ -10,14 +10,15 @@ logger = logging.getLogger(__name__)
 
 def _route_after_search(state: AgentState) -> str:
     if state.get("error"):
-        logger.warning(f"Error flag set - routingg to END: {state['error']}")
-    
+        logger.warning(f"Error flag set - routing to END: {state['error']}")
+        return END
+
     done = state.get("queries_done", 0)
     total = len(state.get("search_queries", []))
 
     if done < total:
-        return "searh_web"
-    
+        return "search_web"
+
     return "extract_data"
 
 def build_graph() -> StateGraph:
@@ -36,6 +37,9 @@ def build_graph() -> StateGraph:
         "extract_data": "extract_data",
         END: END,
     }
+
+    g.add_edge("plan_research", "search_web")
+    g.add_conditional_edges("search_web", _route_after_search, branch)
 
     g.add_edge("extract_data",    "synthesize")
     g.add_edge("synthesize",      "generate_report")

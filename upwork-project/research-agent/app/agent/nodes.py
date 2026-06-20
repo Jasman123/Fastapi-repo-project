@@ -51,7 +51,8 @@ async def search_web(state: dict) -> dict:
 
     idx = state.get("queries_done", 0)
     query = state["search_queries"][idx]
-    logger.info(f"Search [{idx+1}/{len(state["search_queries"])}]: {query!r}")
+    total = len(state["search_queries"])
+    logger.info(f"Search [{idx+1}/{total}]: {query!r}")
 
     try:
         results = await web_search(query)
@@ -73,7 +74,8 @@ async def extract_data(state: dict) -> dict:
 
     raw: list[dict[str, Any]] = state.get("raw_results", [])
     if not raw:
-        return {"structured_data": [], "error": "No search results to extrac from"}
+        logger.warning("No search results — skipping extraction, report will use LLM knowledge only")
+        return {"structured_data": []}
     
     topic = state["topic"]
     llm = get_llm()
@@ -81,8 +83,8 @@ async def extract_data(state: dict) -> dict:
     snippet = "\n\n".join(
         f"[{i + 1}] {r.get('title', 'No title')}\n"
         f"URL: {r.get('url', '')}\n"
-        f"{r.get('snippet', '')}"
-        for i, r in enumerate(raw[:20])
+        f"{r.get('snippet', '')[:300]}"
+        for i, r in enumerate(raw[:8])
     )
 
     prompt = ChatPromptTemplate.from_messages([
@@ -96,7 +98,7 @@ async def extract_data(state: dict) -> dict:
     ])
 
     try:
-        response = await (prompt | llm).ainvoke({"topic": topic, "snippet": snippet})
+        response = await (prompt | llm).ainvoke({"topic": topic, "snippets": snippet})
         data: list[dict] = json.loads(strip_fences(response.content))
         data.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
         logger.info(f"Extracted {len(data)} structured items")
@@ -107,8 +109,8 @@ async def extract_data(state: dict) -> dict:
         }
     
     except Exception as exc:
-        logger.error(f"extract_data failed: {exc}")
-        return {"error": f"Extractionn failed: {exc}", "structured_data": []}
+        logger.warning(f"extract_data failed ({exc}) — continuing without structured data")
+        return {"structured_data": []}
     
 async def synthesize(state: dict) -> dict:
     data = state.get("structured_data", [])
@@ -175,14 +177,14 @@ async def generate_report(state: dict) -> dict:
             "queries": ", ".join(queries),
             "synthesis": synthesis,
             "findings": json.dumps(data[:8], indent=2),
-            "souces": sources_md[:2000],
+            "sources": sources_md[:2000],
         })
         report = response.content.strip()
         logger.info(f"Report generated: {len(report)} chars")
         
         return {
             "report_markdown" : report,
-            "message": [AIMessage(content="Report complete")],
+            "messages": [AIMessage(content="Report complete")],
         }
     except Exception as exc:
         logger.error(f"generate_report failed: {exc}")

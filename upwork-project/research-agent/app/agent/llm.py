@@ -32,7 +32,20 @@ def get_llm() -> BaseChatModel:
             temperature=settings.LLM_TEMPERATURE,
             max_output_tokens=settings.LLM_MAX_TOKENS,
         )
+    
+    if settings.LLM_PROVIDER == "local":
+        from langchain_openai import ChatOpenAI
+        logger.info(f"LLM: Local / {settings.LOCAL_MODEL} @ {settings.LOCAL_BASE_URL}")
+        return ChatOpenAI(
+            model=settings.LOCAL_MODEL,
+            base_url=settings.LOCAL_BASE_URL,
+            api_key=settings.LOCAL_API_KEY,
+            temperature=settings.LLM_TEMPERATURE,
+            max_tokens=settings.LLM_MAX_TOKENS,
+            timeout=120,
+        )
+
     raise ValueError(
         f"Unknown LLM_PROVIDER: {settings.LLM_PROVIDER}."
-        "Valid values: 'openai', 'vertex'."
+        "Valid values: 'openai', 'vertex', 'local'."
     )

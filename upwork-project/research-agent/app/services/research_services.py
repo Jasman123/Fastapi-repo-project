@@ -22,7 +22,7 @@ class ResearchService:
 
     async def run_research(self, topic: str) -> ReportRecord:
         job_id = str(uuid.uuid4())
-        logger.infor(f"[{job_id}] Research started: {topic!r}")
+        logger.info(f"[{job_id}] Research started: {topic!r}")
 
         initial_state = {
             "messages": [],
@@ -31,7 +31,7 @@ class ResearchService:
             "queries_done": 0,
             "raw_results": [],
             "structured_data" : [],
-            "sythesis": "",
+            "synthesis": "",
             "report_markdown": "",
             "error": None,
         }
@@ -41,7 +41,7 @@ class ResearchService:
                 final_state = await research_graph.ainvoke(initial_state)
             except Exception as exc:
                 logger.error(f"[{job_id}] Graph execution error: {exc}", exc_info=True)
-                record = await self._persit(
+                return await self._persist(
                     job_id=job_id,
                     topic=topic,
                     status="failed",
@@ -51,22 +51,22 @@ class ResearchService:
                     elapsed=timer.elapsed,
                     error=str(exc),
                 )
-        
+
         if final_state.get("error"):
-            record = await self._persit(
+            return await self._persist(
                 job_id=job_id,
                 topic=topic,
                 status="failed",
                 report_markdown="",
-                search_queries=final_state("search_queries", []),
+                search_queries=final_state.get("search_queries", []),
                 structured_data=[],
                 elapsed=timer.elapsed,
                 error=final_state["error"],
             )
 
-        record = await self._persit(
+        record = await self._persist(
             job_id=job_id,
-            topoic=topic,
+            topic=topic,
             status="completed",
             report_markdown=final_state.get("report_markdown", ""),
             search_queries=final_state.get("search_queries", []),
@@ -86,12 +86,12 @@ class ResearchService:
         
         return self._to_record(row)
     
-    async def list_report(self, limit: int = 20) -> list[ReportRecord]:
+    async def list_reports(self, limit: int = 20) -> list[ReportRecord]:
         stmt = (
-            select(ReportModel). order_by(ReportModel.created_at.desc())
+            select(ReportModel).order_by(ReportModel.created_at.desc()).limit(limit)
         )
         result = await self._session.execute(stmt)
-        return [self._to_record(r) for r in result.scalar().all()]
+        return [self._to_record(r) for r in result.scalars().all()]
     
     async def _persist(
             self, *,

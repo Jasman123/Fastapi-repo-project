@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = Field(default=0.3)
     LLM_MAX_TOKENS: int = Field(default=2048)
 
+    LOCAL_BASE_URL: str = Field(default="http://localhost:8000/v1")
+    LOCAL_MODEL: str = Field(default="local-model")
+    LOCAL_API_KEY: str = Field(default="not-needed")
+
 
     model_config = SettingsConfigDict(
         env_file=".env",
