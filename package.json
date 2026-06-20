@@ -1,0 +1,16 @@
+{
+  "name": "fastapi-repo-e2e",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "playwright test --config playwright/playwright.config.js",
+    "test:ui": "playwright test --config playwright/playwright.config.js --ui",
+    "test:research:api": "playwright test playwright/research-agent/test_api.spec.js --config playwright/playwright.config.js",
+    "test:research:e2e": "playwright test playwright/research-agent/test_ui.spec.js --config playwright/playwright.config.js",
+    "test:research:providers": "playwright test playwright/research-agent/test_providers.spec.js --config playwright/playwright.config.js",
+    "test:fast": "playwright test --config playwright/playwright.config.js --grep-invert @slow",
+    "report": "playwright show-report playwright-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0"
+  }
+}
