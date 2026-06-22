@@ -8,6 +8,9 @@
     "test:research:e2e": "playwright test playwright/research-agent/test_ui.spec.js --config playwright/playwright.config.js",
     "test:research:providers": "playwright test playwright/research-agent/test_providers.spec.js --config playwright/playwright.config.js",
     "test:fast": "playwright test --config playwright/playwright.config.js --grep-invert @slow",
+    "test:rag": "playwright test --config playwright/multi-doc-rag/playwright.config.js",
+    "test:rag:api": "playwright test playwright/multi-doc-rag/test_api.spec.js --config playwright/multi-doc-rag/playwright.config.js",
+    "test:rag:ui": "playwright test playwright/multi-doc-rag/test_ui.spec.js --config playwright/multi-doc-rag/playwright.config.js",
     "report": "playwright show-report playwright-report"
   },
   "devDependencies": {
