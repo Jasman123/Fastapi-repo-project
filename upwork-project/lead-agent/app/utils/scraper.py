@@ -13,8 +13,8 @@ async def fetch_page_text(url: str) -> tuple[str, str | None] :
     paths_to_try = ["", "/about", "/about-us", "/contact"]
 
     try:
-        async with async_playwright as p:
-            browser = await p.chromium.lauch(
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
                 headless=settings.PLAYWRIGHT_HEADLESS,
             )
             context = await browser.new_context(
@@ -23,7 +23,7 @@ async def fetch_page_text(url: str) -> tuple[str, str | None] :
                     "AppleWebKit/537.36 (KHTML, like Gecko) "
                     "Chrome/120.0.0.0 Safari/537.36"
                 ),
-                viewport={"width": 1280, "heigth": 800}
+                viewport={"width": 1280, "height": 800}
             )
 
             page = await context.new_page()
@@ -35,7 +35,7 @@ async def fetch_page_text(url: str) -> tuple[str, str | None] :
                     await page.goto(
                         target_url,
                         timeout=settings.PLAYWRIGHT_TIMEOUT_MS,
-                        wait_util="domcontentloaded",
+                        wait_until="domcontentloaded",
                     )
 
                     raw = await page.evaluate("""() => {
@@ -62,7 +62,8 @@ async def fetch_page_text(url: str) -> tuple[str, str | None] :
                         clean = line.strip()
                         if clean and clean not in seen_lines:
                             seen_lines.add(clean)
-                    
+                            combined_text += clean + "\n"
+
                     logger.debug(f"Fetched {target_url} - {len(raw)} chars")
                 
                 except PlaywrightTimeout:
