@@ -98,4 +98,16 @@ async def get_recent_leads(limit: int = 50) -> list[dict]:
             (limit,)
         )
         rows = await cursor.fetchall()
-        return [dict(row) for row in rows]
+        leads = []
+        for row in rows:
+            lead = dict(row)
+            # score_breakdown is stored as a JSON string — parse it back to a
+            # dict so the API returns the same shape as /single and /batch
+            try:
+                lead["score_breakdown"] = json.loads(lead.get("score_breakdown") or "{}")
+            except (json.JSONDecodeError, TypeError):
+                lead["score_breakdown"] = {}
+            # normalise the SQLite 0/1 integer to a real bool
+            lead["alert_sent"] = bool(lead.get("alert_sent"))
+            leads.append(lead)
+        return leads
