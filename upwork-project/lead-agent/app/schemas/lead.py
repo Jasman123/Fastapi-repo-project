@@ -29,7 +29,7 @@ class ScoredLead(BaseModel):
     enriched: EnrichedLead
     score: int = Field(ge=0, le=100)
     tier: Literal["hot", "warm", "cold"]
-    socre_breakdown: dict[str, int] = Field( default = {}, description="Which criteria contibuted how many points")
+    score_breakdown: dict[str, int] = Field(default={}, description="Which criteria contributed how many points")
 
 class LeadOutput(BaseModel):
     url: str

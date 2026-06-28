@@ -19,12 +19,12 @@ class Settings(BaseSettings):
 
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
-    SMPT_USER: str = ""
+    SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     ALERT_RECIPIENT: str = ""
 
 
-    SQLITE_PATH: str = ".storage/leads.db"
+    SQLITE_PATH: str = "./storage/leads.db"
 
     APP_NAME: str = "Lead Qualification Agent"
     APP_VERSION: str = "1.0.0"
@@ -39,4 +39,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings
+    return Settings()

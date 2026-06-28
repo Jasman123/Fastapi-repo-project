@@ -25,11 +25,10 @@ class BatchJobResponse(BaseModel):
     total: int
     succeeded: int
     failed: int
-    failed: int
     hot_leads: int
-    warm_lead: int
+    warm_leads: int
     cold_leads: int
-    result: list[LeadJobResult]
+    results: list[LeadJobResult]
 
 class SingleLeadResponse(BaseModel):
     status: Literal["success", "failed"]
